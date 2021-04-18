@@ -1,0 +1,46 @@
+SHELL = /bin/sh
+CFLAGS = -g -Wall -pedantic -std=c99
+
+prefix = @prefix@
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+libdir = $(exec_prefix)/lib
+datarootdir = $(prefix)/share
+mandir = $(datarootdir)/man
+includedir = $(prefix)/include
+
+PROG = crbehave
+OBJS = crbehave.o
+
+INSTALL = install
+INSTALLFLAGS =
+
+all: $(PROG).a
+
+$(PROG).a: $(OBJS)
+	ar r $(PROG).a $(OBJS)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	rm -f $(OBJS) $(PROG).a
+
+install: $(PROG).a
+	if [ ! -x $(DESTDIR)$(libdir) ] ; then \
+		mkdir -p $(DESTDIR)$(libdir) ; fi
+	if [ ! -x $(DESTDIR)$(libdir)/pkgconfig ] ; then \
+		mkdir -p $(DESTDIR)$(libdir)/pkgconfig ; fi
+	if [ ! -x $(DESTDIR)$(includedir) ] ; then \
+		mkdir -p $(DESTDIR)$(includedir) ; fi
+	$(INSTALL) $(INSTALLFLAGS) $(PROG).a $(DESTDIR)$(libdir)
+	cp crbehave.pc $(DESTDIR)$(libdir)/pkgconfig
+	cp crbehave.h $(DESTDIR)$(includedir)
+
+uninstall:
+	if [ -e $(DESTDIR)$(libdir)/$(PROG).a ] ; then \
+		rm $(DESTDIR)$(libdir)/$(PROG).a ; fi
+	if [ -e $(DESTDIR)$(libdir)/pkgconfig/$(PROG).pc ] ; then \
+		rm $(DESTDIR)$(libdir)/pkgconfig/$(PROG).pc ; fi
+	if [ -e $(includedir)/crbehave.h ] ; then \
+		rm $(DESTDIR)$(includedir)/crbehave.h ; fi

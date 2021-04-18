@@ -1,0 +1,13 @@
+#!/bin/sh
+# Usage: ./configure [install prefix]
+
+prefix=/usr/local
+PROG=crbehave
+
+if [ "$#" -eq 1 ] ; then prefix=$1 ; fi
+echo "prefix=${prefix}"
+
+echo "create: ${PROG}.pc"
+sed "s|@prefix@|${prefix}|g" ${PROG}.pc.in >${PROG}.pc
+echo "create: Makefile"
+sed "s|@prefix@|${prefix}|g" Makefile.in >Makefile

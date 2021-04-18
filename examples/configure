@@ -1,0 +1,31 @@
+#!/bin/sh
+# Usage: ./configure [install prefix]
+
+which pkg-config >/dev/null
+if [ "$?" -ne 0 ] ; then
+	echo "You need to have pkg-config installed and in PATH."
+	exit 1
+fi
+
+prefix=/usr/local
+if [ "$#" -eq 1 ] ; then prefix=$1 ; fi
+echo "prefix=${prefix}"
+
+echo "check: crbehave"
+pkg-config crbehave
+if [ "$?" -ne 0 ] ; then
+	echo "You need to have 'crbehave' pkg-config package installed."
+	echo "Verify also your PKG_CONFIG_PATH."
+	exit 1
+fi
+CRBEHAVE_CFLAGS=$(pkg-config crbehave --cflags)
+echo "CRBEHAVE_CFLAGS=${CRBEHAVE_CFLAGS}"
+CRBEHAVE_LDFLAGS=$(pkg-config crbehave --libs)
+echo "CRBEHAVE_LDFLAGS=${CRBEHAVE_LDFLAGS}"
+
+echo "create: Makefile"
+sed \
+	-e "s|@prefix@|${prefix}|g" \
+	-e "s|@CRBEHAVE_CFLAGS@|${CRBEHAVE_CFLAGS}|g" \
+	-e "s|@CRBEHAVE_LDFLAGS@|${CRBEHAVE_LDFLAGS}|g" \
+	Makefile.in >Makefile

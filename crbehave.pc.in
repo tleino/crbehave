@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: crbehave
+Description: Regex based behavior driven testing framework for C
+Version: 0.1
+Libs: ${libdir}/crbehave.a
+Cflags: -I${includedir}
