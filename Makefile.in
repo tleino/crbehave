@@ -1,5 +1,5 @@
 SHELL = /bin/sh
-CFLAGS = -g -Wall -pedantic -std=c99
+CFLAGS = -g -Wall -Wno-missing-braces -Wmissing-prototypes -Wunused -Wsign-compare -Wshadow -Wno-uninitialized -Wpointer-arith -std=c99 -D_POSIX_C_SOURCE=200809L
 
 prefix = @prefix@
 exec_prefix = $(prefix)

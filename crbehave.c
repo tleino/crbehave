@@ -3,6 +3,7 @@
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -145,7 +146,7 @@ run_line(
 	};
 	size_t i, len;
 	static size_t last_test = -1;
-	struct match m;
+	struct match m = { 0 };
 	int ret;
 	char *p;
 
