@@ -52,3 +52,4 @@ Scenario: Subtracting a vector from the zero vector
 Scenario: Negating a tuple
   Given a is tuple(1, -2, 3, -4)
   Then -a = tuple(-1, 2, -3, 4)
+

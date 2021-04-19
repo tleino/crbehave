@@ -1,19 +1,31 @@
 CRBEHAVE_CFLAGS = @CRBEHAVE_CFLAGS@
 CRBEHAVE_LDFLAGS = @CRBEHAVE_LDFLAGS@
-PROG = tuples
-CFLAGS = $(CRBEHAVE_CFLAGS) -Wall -pedantic -std=c99
+CFLAGS = $(CRBEHAVE_CFLAGS) -Wall -g -std=c99
 LDFLAGS = $(CRBEHAVE_LDFLAGS)
 
-all: $(PROG)
-
-SRCS=tuple.c tuples.c
+SRCS=tuple.c ppm.c
 OBJS=$(SRCS:.c=.o)
 
-$(PROG): $(OBJS)
-	$(CC) -o$@ $(OBJS) $(LDFLAGS)
+TEST_SRCS=tests/tuples.c tests/canvas.c
+TEST_OBJS=$(TEST_SRCS:.c=.o)
+TEST_PROGS=$(TEST_SRCS:.c=)
+
+all: $(OBJS) $(TEST_OBJS) $(TEST_PROGS)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
+$(TEST_PROGS): $@.o
+	$(CC) $(LDFLAGS) $@.o $(OBJS) -o$@
+
+$(TEST_OBJS):
+	$(CC) $(CFLAGS) -c $(@:.o=.c) -o$@
+
+check: $(TEST_PROGS)
+	cd tests && ./tuples
+	cd tests && ./canvas
+
 clean:
-	rm -f $(PROG) $(OBJS)
+	rm -f $(PROG) $(OBJS) $(TEST_OBJS)
+
+

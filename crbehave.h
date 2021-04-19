@@ -19,6 +19,21 @@ struct match
 	} v;
 };
 
+typedef enum crbehave_test {
+	CRBEHAVE_TEST_GIVEN, CRBEHAVE_TEST_WHEN, CRBEHAVE_TEST_THEN
+} CRBehaveTest;
+
+struct crbehave_step
+{
+	CRBehaveTest type;
+	int (*funp)(struct match *, const char *, const char *);
+	char *title;
+	size_t body_offset;
+	char *body;
+	size_t body_alloc;
+	size_t body_len;
+};
+
 int   match(struct match *, const char *, const char *);
 char *match_str(struct match *, int);
 int   match_int(struct match *, int);
@@ -29,8 +44,8 @@ int   match_expect(struct match *, int);
 void
 crbehave_run(
     char *file,
-    int (*given)(struct match *, const char *),
-    int (*when)(struct match *, const char *),
-    int (*then)(struct match *, const char *));
+    int (*given)(struct match *, const char *, const char *),
+    int (*when)(struct match *, const char *, const char *),
+    int (*then)(struct match *, const char *, const char *));
 
 #endif

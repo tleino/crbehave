@@ -1,12 +1,13 @@
-#include "crbehave.h"
-#include "tuple.h"
+#include <crbehave.h>
+
+#include "../tuple.h"
 
 struct tuple _tuple;
 struct tuple _t[2];
 struct tuple _p, _v, _zero;
 
 static int
-given(struct match *m, const char *s)
+given(struct match *m, const char *s, const char *body)
 {
 	int i;
 
@@ -62,7 +63,7 @@ given(struct match *m, const char *s)
 }
 
 static int
-then(struct match *m, const char *s)
+then(struct match *m, const char *s, const char *body)
 {
 	struct tuple t;
 

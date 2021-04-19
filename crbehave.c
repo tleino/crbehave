@@ -12,6 +12,7 @@ enum match_type {
 };
 
 static void match_set_type(struct match *, int);
+static void record_result(const char *line, int ret);
 
 int total_pass, total_fail, total_missing;
 int scenario_number;
@@ -112,32 +113,68 @@ match_free(struct match *m)
 }
 
 static char *
-skip_spaces(char *line)
+skip_spaces(char *line, size_t *n_spaces_skipped)
 {
-	while (*line != '\0' && isspace(*line))
+	while (*line != '\0' && isspace(*line)) {
+		(*n_spaces_skipped)++;
 		line++;
+	}
 
 	return line;
 }
 
 static int
-scenario(struct match *m, const char *s)
+scenario(struct match *m, const char *s, const char *body)
 {
 	printf("%3d. %s\n", ++scenario_number, s);
 	return 2;
 }
 
 static int
-run_line(
-    char *line,
-    size_t test_type,
-    int (*given)(struct match *, const char *),
-    int (*when)(struct match *, const char *),
-    int (*then)(struct match *, const char *))
+call_step(struct crbehave_step *self)
+{
+	struct match m = { 0 };
+	int ret;
+
+	if (self->funp == NULL)
+		return -1;
+
+	ret = (*self->funp)(&m, self->title, self->body);
+
+	record_result(self->title, ret);
+
+	if (self->title != NULL)
+		free(self->title);
+	if (self->body != NULL)
+		free(self->body);
+	self->title = NULL;
+	self->body = NULL;
+	self->body_len = 0;
+	self->body_alloc = 0;
+
+	match_free(&m);
+
+	return ret;
+}
+
+/*
+ * Returns 1 if step was called (ret is set to return value).
+ * Returns 0 if step was reading body content.
+ * Returns -1 if error.
+ */
+static int
+parse_step(
+    struct crbehave_step *self,
+    const char *line,
+    size_t offset,
+    int *ret,
+    int (*given)(struct match *, const char *, const char *),
+    int (*when)(struct match *, const char *, const char *),
+    int (*then)(struct match *, const char *, const char *))
 {
 	struct {
 		char *keyword;
-		int (*funp)(struct match *, const char *);
+		int (*funp)(struct match *, const char *, const char *);
 	} test[] = {
 		{ "Scenario: ", scenario },
 		{ "Given ", given },
@@ -145,59 +182,98 @@ run_line(
 		{ "Then ", then }
 	};
 	size_t i, len;
-	static size_t last_test = -1;
-	struct match m = { 0 };
-	int ret;
 	char *p;
 
-	line = skip_spaces(line);
+	if ((strncasecmp(line, "And ", 4) == 0 ||
+	    strncasecmp(line, "* ", 2) == 0) &&
+	    (self->funp == given || self->funp == when ||
+	    self->funp == then)) {
+		*ret = call_step(self);
+		self->title = strdup(&line[4]);
+		return 1;
+	}
+
+	for (i = 0; i < sizeof(test) / sizeof(test[0]); i++) {
+		len = strlen(test[i].keyword);
+		if (strncasecmp(line, test[i].keyword, len) == 0) {
+			*ret = call_step(self);
+			self->title = strdup(&line[len]);
+			self->funp = test[i].funp;
+			return 1;
+		}
+	}
+
+	if (self->funp != given && self->funp != when && self->funp != then)
+		return -1;
+
+	if (strncasecmp(line, "\"\"\"", 3) == 0) {
+		self->body_offset = offset;
+		return 0;
+	}
+
+	len = strlen(line) + 1;
+	if (self->body_len + len >= self->body_alloc) {
+		self->body_alloc *= 2;
+		self->body = realloc(self->body, self->body_alloc + 1);
+	}
+	p = strcpy(&self->body[self->body_len], line);
+	self->body_len += (len - 1);
+	self->body[self->body_len] = '\n';
+	self->body_len++;
+	self->body[self->body_len] = '\0';
+
+	return 0;
+}
+
+static void
+record_result(const char *line, int ret)
+{
+	switch (ret) {
+	case 0:
+		printf("%10s: %s\n", "fail", line);
+		total_fail++;
+		break;
+	case 1:
+#if 0
+		printf("%10s: %s\n", "pass", line);
+#endif
+		total_pass++;
+		break;
+	case 2:	/* do not count, do not show, e.g. Scenario */
+		break;
+	case -1:
+		printf("%10s: %s\n", "missing", line);
+		total_missing++;
+		break;
+	}
+}
+
+static int
+run_line(
+    char *line,
+    struct crbehave_step *step,
+    int (*given)(struct match *, const char *, const char *),
+    int (*when)(struct match *, const char *, const char *),
+    int (*then)(struct match *, const char *, const char *))
+{
+	int ret;
+	size_t n_spaces_skipped = 0;
+
+	line = skip_spaces(line, &n_spaces_skipped);
 
 	if (strlen(line) == 0)
 		return 0;
 
-	for (i = 0; i < sizeof(test) / sizeof(test[0]); i++) {
-		len = strlen(test[i].keyword);
-		if (test_type == i ||
-		    strncasecmp(line, test[i].keyword, len) == 0) {
-			if (test_type == -1)
-				last_test = i;
-			if (test[i].funp != NULL) {
-				if (test_type == i) {
-					p = strchr(line, ' ');
-					ret = (*test[i].funp)(&m, ++p);
-				} else
-					ret = (*test[i].funp)(&m, &line[len]);
-				switch (ret) {
-				case 0:
-					printf("%10s: %s\n", "fail", line);
-					total_fail++;
-					break;
-				case 1:
-#if 0
-					printf("%10s: %s\n", "pass", line);
-#endif
-					total_pass++;
-					break;
-				case 2:
-					break;
-				case -1:
-					printf("%10s: %s\n", "missing", line);
-					total_missing++;
-					break;
-				}
-			}
-			match_free(&m);
-			return 0;
-		}
-	}
-	if (i == sizeof(test) / sizeof(test[0])) {
-		if (strncasecmp(line, "* ", 2) == 0 ||
-		    strncasecmp(line, "And ", 4) == 0) {
-			if (last_test == -1)
-				return -1;
-			return run_line(line, last_test, given, when, then);
-		}
-		return -1;
+	switch (parse_step(step, line, n_spaces_skipped, &ret,
+	    given, when, then)) {
+	case 1:	/* step was executed */
+		break;
+	case 0: /* step was not executed */
+		break;
+	case -1: /* error */
+		step->funp = NULL;
+		return -1;		
+		break;
 	}
 
 	return 0;
@@ -206,13 +282,14 @@ run_line(
 void
 crbehave_run(
     char *file,
-    int (*given)(struct match *, const char *),
-    int (*when)(struct match *, const char *),
-    int (*then)(struct match *, const char *))
+    int (*given)(struct match *, const char *, const char *),
+    int (*when)(struct match *, const char *, const char *),
+    int (*then)(struct match *, const char *, const char *))
 {
 	FILE *fp;
 	char *line = NULL;
 	size_t n;
+	struct crbehave_step step = { 0 };
 
 	if ((fp = fopen(file, "r")) == NULL)
 		err(1, "fopen: %s", file);
@@ -220,12 +297,14 @@ crbehave_run(
 	n = 0;
 	while (getline(&line, &n, fp) >= 0) {
 		line[strcspn(line, "\r\n")] = '\0';
-		if (run_line(line, -1, given, when, then) == -1)
+		if (run_line(line, &step, given, when, then) == -1)
 			errx(1, "parse error: %s", line);
 	}
 
 	free(line);
 	fclose(fp);
+
+	call_step(&step);
 
 	printf("\n%d (pass), %d (fail), %d (missing)\n",
 	    total_pass, total_fail, total_missing);
