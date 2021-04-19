@@ -23,8 +23,6 @@ given(struct match *m, const char *s, const char *body)
 static int
 when(struct match *m, const char *s, const char *body)
 {
-	printf("CANVAS WHEN with '%s'\n", s);
-
 	if (match(m, "ppm is canvas_to_ppm.*", s)) {
 		ppm = fopen("/tmp/testppm", "w+");
 		if (ppm == NULL)
@@ -33,28 +31,6 @@ when(struct match *m, const char *s, const char *body)
 		return 1;
 	}
 	return -1;
-}
-
-#include <ctype.h>
-static void
-hexdump(const char *s)
-{
-	int i;
-	size_t len;
-	unsigned char c;
-
-	len = strlen(s);
-
-	printf("hexdump of len=%zu: '", len);
-	for (i = 0; i < len; i++) {
-		c = s[i];
-		if (isprint(c))
-			putchar(c);
-		else {
-			printf("\\%02x", c);
-		}
-	}
-	printf("'\n");
 }
 
 static int
@@ -68,10 +44,6 @@ then(struct match *m, const char *s, const char *body)
 		fseek(ppm, 0L, SEEK_SET);
 		n = fread(buf, 1, sizeof(buf) - 1, ppm);
 		buf[n] = '\0';
-		printf("buf is: '%s'\n", buf);
-		hexdump(buf);
-		printf("body is: '%s'\n", body);
-		hexdump(body);
 		ret = match_expect(m, strcmp(body, buf) == 0);
 		fclose(ppm);
 		return ret;
