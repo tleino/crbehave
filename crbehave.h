@@ -1,7 +1,7 @@
 #ifndef MATCH_H
 #define MATCH_H
 
-#define MATCH_MAX_SUB 16
+#define MATCH_MAX_SUB 256
 
 #include <sys/types.h>
 #include <regex.h>
