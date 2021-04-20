@@ -13,16 +13,12 @@ TEST_PROGS=$(TEST_SRCS:.c=)
 all: $(OBJS) $(TEST_OBJS) $(TEST_PROGS)
 
 .c.o:
-	echo "plain obj" $@
-	echo "test progs" $(TEST_PROGS)
 	$(CC) $(CFLAGS) -c $<
 
 $(TEST_PROGS): $(TEST_OBJS)
-	echo "test prog" $@
 	$(CC) $@.o $(OBJS) -o$@ $(LDFLAGS)
 
 $(TEST_OBJS):
-	echo "test obj" $@
 	$(CC) $(CFLAGS) -c $(@:.o=.c) -o$@
 
 check: $(TEST_PROGS)
