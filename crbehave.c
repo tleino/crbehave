@@ -212,6 +212,10 @@ parse_step(
 	}
 
 	len = strlen(line) + 1;
+	if (self->body_alloc == 0) {
+		self->body_alloc = 512;
+		self->body = realloc(self->body, self->body_alloc + 1);
+	}
 	if (self->body_len + len >= self->body_alloc) {
 		self->body_alloc *= 2;
 		self->body = realloc(self->body, self->body_alloc + 1);
