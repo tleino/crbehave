@@ -13,21 +13,22 @@ TEST_PROGS=$(TEST_SRCS:.c=)
 all: $(OBJS) $(TEST_OBJS) $(TEST_PROGS)
 
 .c.o:
+	echo "plain obj" $@
+	echo "test progs" $(TEST_PROGS)
 	$(CC) $(CFLAGS) -c $<
 
-$(TEST_PROGS): $@.o
-	$(CC) $(LDFLAGS) $@.o $(OBJS) -o$@
+$(TEST_PROGS): $(TEST_OBJS)
+	echo "test prog" $@
+	$(CC) $@.o $(OBJS) -o$@ $(LDFLAGS)
 
 $(TEST_OBJS):
+	echo "test obj" $@
 	$(CC) $(CFLAGS) -c $(@:.o=.c) -o$@
 
 check: $(TEST_PROGS)
-	@echo -e "## tuples\n"
-	@cd tests && ./tuples
-	@echo -e "\n## canvas\n"
-	@cd tests && ./canvas
-	@echo -e "\n## matrix\n"
-	@cd tests && ./matrix
+	cd tests && ./tuples
+	cd tests && ./canvas
+	cd tests && ./matrix
 
 clean:
 	rm -f $(PROG) $(OBJS) $(TEST_OBJS)
