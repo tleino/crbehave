@@ -7,7 +7,6 @@
 
 struct canvas c;
 FILE *ppm;
-static char buf[1024];
 
 static int
 given(struct match *m, const char *s, const char *body)
