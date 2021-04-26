@@ -196,14 +196,6 @@ parse_line(
 		if (add_example(scenario, line) == NULL)
 			return -1;
 		return 0;
-#if 0
-		printf("Should store example: %s\n", line);
-		nfields = parse_table_row(strdup(line), fields, ARRLEN(fields));
-		printf("Got %d fields\n", nfields);
-		for (field = fields; *field != NULL; field++)
-			printf("Field: %s\n", *field);
-		return 0;
-#endif
 	} else if (scenario->collect_examples)
 		scenario->collect_examples = false;
 
