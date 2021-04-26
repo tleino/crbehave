@@ -10,7 +10,7 @@ mandir = $(datarootdir)/man
 includedir = $(prefix)/include
 
 PROG = crbehave
-OBJS = expand.o crbehave.o
+OBJS = table.o match.o expand.o crbehave.o
 
 INSTALL = install
 INSTALLFLAGS =
@@ -46,5 +46,7 @@ uninstall:
 		rm $(DESTDIR)$(includedir)/crbehave.h ; fi
 
 # Dependencies
-crbehave.o: crbehave.c crbehave.h expand.h
+crbehave.o: crbehave.c crbehave_private.h crbehave.h expand.h
 expand.o: expand.c expand.h
+match.o: match.c crbehave_private.h crbehave.h
+table.o: table.c crbehave.h

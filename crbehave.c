@@ -1,4 +1,4 @@
-#include "crbehave.h"
+#include "crbehave_private.h"
 #include "expand.h"
 
 #include <err.h>
@@ -8,13 +8,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-enum match_type {
-	MATCH_NONE, MATCH_STR, MATCH_INT, MATCH_DOUBLE
-};
-
-typedef int (*KeywordCallback)(struct match *, const char *, const char *);
-
-static void match_set_type(struct match *, int);
 static void record_result(const char *line, int ret);
 
 int total_pass, total_fail, total_missing;
@@ -23,103 +16,6 @@ int scenario_number;
 #ifndef ARRLEN
 #define ARRLEN(_x) sizeof((_x)) / sizeof((_x)[0])
 #endif
-
-int
-match_expect(struct match *m, int val)
-{
-	if (val == 0)
-		return 0;
-	else
-		return 1;
-}
-
-int
-match(struct match *m, const char *pattern, const char *str)
-{
-	int err;
-	char buf[256];
-
-	match_free(m);
-
-	regcomp(&m->preg, pattern, REG_EXTENDED | REG_ICASE);
-
-	if ((err = regexec(&m->preg, str, MATCH_MAX_SUB, m->pmatch, 0)) != 0) {
-		if (err != REG_NOMATCH) {
-			regerror(err, &m->preg, buf, sizeof(buf));
-			warnx("%s", buf);
-		}
-		return 0;
-	}
-
-	m->str = str;
-	m->type = 0;
-	return 1;
-}
-
-static void
-match_set_type(struct match *m, int type)
-{
-	if (m->type == MATCH_STR) {
-		free(m->v.str);
-		m->v.str = NULL;
-	}
-	m->type = type;
-}
-
-int
-match_int(struct match *m, int arg)
-{
-	int val;
-	char *s;
-
-	if (arg >= MATCH_MAX_SUB || arg < 0)
-		return 0;
-
-	s = match_str(m, arg);
-	val = atoi(s);
-	match_set_type(m, MATCH_INT);
-	return val;
-}
-
-double
-match_double(struct match *m, int arg)
-{
-	double val;
-	char *s;
-
-	if (arg >= MATCH_MAX_SUB || arg < 0)
-		return 0;
-
-	s = match_str(m, arg);
-	val = atof(s);
-	match_set_type(m, MATCH_DOUBLE);
-	return val;
-}
-
-char *
-match_str(struct match *m, int arg)
-{
-	regmatch_t *p;
-
-	if (arg >= MATCH_MAX_SUB || arg < 0)
-		return NULL;
-
-	match_set_type(m, MATCH_STR);
-
-	p = &m->pmatch[arg];
-	m->v.str = strndup(&m->str[p->rm_so], p->rm_eo - p->rm_so);
-
-	return m->v.str;
-}
-
-void
-match_free(struct match *m)
-{
-	if (m->type == MATCH_STR)
-		free(m->v.str);
-	m->type = 0;
-	regfree(&m->preg);
-}
 
 static char *
 skip_spaces(char *line, size_t *n_spaces_skipped)
@@ -183,38 +79,6 @@ record_result(const char *line, int ret)
 		total_missing++;
 		break;
 	}
-}
-
-/*
- * Parses table row syntax:
- *   "| field1 | field2 | field3 |"
- * And returns the number of fields and writes the field pointers.
- */
-static int
-parse_table_row(char *str, char **fields, size_t max_fields)
-{
-	char *p;
-	size_t n = 0;
-
-	p = str;
-	do {
-		p = strchr(p, '|');
-		while (p != NULL && *p != '\0' && isspace(*++p))
-			;
-
-		if (n < max_fields && *p != '\0')
-			fields[n++] = p;
-		else
-			break;
-
-		while (p != NULL && *p != '\0' && !isspace(*++p))
-			;
-		if (p != NULL)
-			*p++ = '\0';
-	} while (p != NULL);
-
-	fields[n] = NULL;
-	return n;
 }
 
 /*

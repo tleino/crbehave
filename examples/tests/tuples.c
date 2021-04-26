@@ -1,4 +1,5 @@
 #include <crbehave.h>
+#include <stdio.h>
 
 #include "../tuple.h"
 
