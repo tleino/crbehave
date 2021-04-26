@@ -1,0 +1,16 @@
+crbehave
+========
+
+crbehave is a behavior driven development framework for C that uses
+standard regular expressions for matching, instead of a specialized
+system, and instead of relying on macros.
+
+The crbehave reads a specification of scenarios following the Gherkin
+given-when-then syntax and calls the respective functions for making the
+specification executable.
+
+It was originally written by the author after opening the first pages of
+Jamis Buck's excellent book, the "The Ray Tracer Challenge - A
+Test-Driven Guide to Your First 3D Renderer", after finding, at that
+time, there was no adequate behavior driven development framework for C
+that would satisfy the author's taste.
