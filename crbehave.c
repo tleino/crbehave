@@ -81,30 +81,6 @@ record_result(const char *line, int ret)
 	}
 }
 
-/*
- * Find named field from an array of fields by name. For example:
- *
- *   parse_table_row("| user | password |", field_names, 16);
- *   parse_table_row("| foo | bar |", fields, 16);
- *   find_named_field(field_names, "user", fields) == "foo";
- *
- * Returns NULL if we didn't find the named field.
- */
-static const char*
-find_named_field(char **field_names, char *name, char **fields)
-{
-	char **field;
-	int n = 0;
-
-	for (field = fields; *field != NULL; field++, n++)
-		if (strcasecmp(*field, name) == 0)
-			break;
-	if (*field == NULL)
-		return NULL;
-
-	return fields[n];
-}
-
 static struct crbehave_example *
 add_example(
    struct crbehave_scenario *scenario, const char *line)
