@@ -3,9 +3,12 @@
 
 #define MATCH_MAX_SUB 256
 
+#define MAX_TABLE_COLS 32
+
 #include <sys/types.h>
 #include <regex.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 struct match
 {
@@ -32,7 +35,31 @@ struct crbehave_step
 	char *body;
 	size_t body_alloc;
 	size_t body_len;
+	bool collect_examples;
+	struct crbehave_step *next;
 };
+
+struct crbehave_scenario;
+
+struct crbehave_example {
+	char *line;
+	char *fields[MAX_TABLE_COLS];
+	struct crbehave_example *next;
+	struct crbehave_scenario *scenario;
+};
+
+struct crbehave_scenario {
+	struct crbehave_step *first_step;
+	struct crbehave_step *last_step;
+	struct crbehave_step *last_step_with_callback;
+	struct crbehave_example *example_field_names;
+	struct crbehave_example *first_example;
+	char *title;
+	bool is_outline;
+	bool collect_examples;	
+};
+
+
 
 int   match(struct match *, const char *, const char *);
 char *match_str(struct match *, int);

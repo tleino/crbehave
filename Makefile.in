@@ -10,7 +10,7 @@ mandir = $(datarootdir)/man
 includedir = $(prefix)/include
 
 PROG = crbehave
-OBJS = crbehave.o
+OBJS = expand.o crbehave.o
 
 INSTALL = install
 INSTALLFLAGS =
@@ -44,3 +44,7 @@ uninstall:
 		rm $(DESTDIR)$(libdir)/pkgconfig/$(PROG).pc ; fi
 	if [ -e $(includedir)/crbehave.h ] ; then \
 		rm $(DESTDIR)$(includedir)/crbehave.h ; fi
+
+# Dependencies
+crbehave.o: crbehave.c crbehave.h expand.h
+expand.o: expand.c expand.h

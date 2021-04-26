@@ -6,7 +6,7 @@ LDFLAGS = $(CRBEHAVE_LDFLAGS)
 SRCS=tuple.c ppm.c
 OBJS=$(SRCS:.c=.o)
 
-TEST_SRCS=tests/tuples.c tests/canvas.c tests/matrix.c
+TEST_SRCS=tests/tuples.c tests/canvas.c tests/matrix.c tests/bank.c
 TEST_OBJS=$(TEST_SRCS:.c=.o)
 TEST_PROGS=$(TEST_SRCS:.c=)
 
@@ -29,6 +29,7 @@ check: $(TEST_PROGS)
 	cd tests && ./tuples
 	cd tests && ./canvas
 	cd tests && ./matrix
+	cd tests && ./bank
 
 clean:
 	rm -f $(PROG) $(OBJS) $(TEST_OBJS)
