@@ -17,8 +17,8 @@ int scenario_number;
 #define ARRLEN(_x) sizeof((_x)) / sizeof((_x)[0])
 #endif
 
-static char *
-skip_spaces(char *line, size_t *n_spaces_skipped)
+static const char *
+skip_spaces(const char *line, size_t *n_spaces_skipped)
 {
 	while (*line != '\0' && isspace(*line)) {
 		(*n_spaces_skipped)++;
@@ -181,10 +181,7 @@ parse_line(
 	};
 	size_t i, len;
 	char *p;
-	char **field;
 	struct crbehave_step *step;
-	char *fields[16];
-	size_t nfields;
 
 	line = skip_spaces(line, &n_spaces_skipped);
 
