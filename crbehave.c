@@ -39,6 +39,8 @@ match(struct match *m, const char *pattern, const char *str)
 	int err;
 	char buf[256];
 
+	match_free(m);
+
 	regcomp(&m->preg, pattern, REG_EXTENDED | REG_ICASE);
 
 	if ((err = regexec(&m->preg, str, MATCH_MAX_SUB, m->pmatch, 0)) != 0) {
@@ -155,18 +157,7 @@ call_step(struct crbehave_step *self, struct crbehave_example *example)
 
 	free(title);
 
-#if 0
-	if (self->title != NULL)
-		free(self->title);
-	if (self->body != NULL)
-		free(self->body);
-	self->title = NULL;
-	self->body = NULL;
-	self->body_len = 0;
-	self->body_alloc = 0;
-
 	match_free(&m);
-#endif
 
 	return ret;
 }
@@ -437,13 +428,23 @@ run_scenario(struct crbehave_scenario *self, struct crbehave_example *example)
 }
 
 static void
+free_step(struct crbehave_step *self)
+{
+	if (self->title != NULL)
+		free(self->title);
+	if (self->body != NULL)
+		free(self->body);
+	free(self);
+}
+
+static void
 free_steps(struct crbehave_scenario *self)
 {
 	struct crbehave_step *n, *next;
 
 	for (n = self->first_step; n != NULL; n = next) {
 		next = n->next;
-		free(n);
+		free_step(n);
 	}
 }
 
