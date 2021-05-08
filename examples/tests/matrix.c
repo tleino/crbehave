@@ -45,5 +45,5 @@ then(struct match *m, const char *s, const char *body)
 int
 main(int argc, char *argv[])
 {
-	crbehave_run("matrix.feature", given, NULL, then);
+	crbehave_run("matrix.feature", given, NULL, then, NULL);
 }

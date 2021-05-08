@@ -61,5 +61,5 @@ then(struct match *m, const char *s, const char *body)
 int
 main(int argc, char *argv[])
 {
-	crbehave_run("bank.feature", given, when, then);
+	crbehave_run("bank.feature", given, when, then, NULL);
 }

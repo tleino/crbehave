@@ -32,8 +32,10 @@ int   match_expect(struct match *, int);
 int parse_table_row(char *, char **, size_t);
 
 typedef int (*KeywordCallback)(struct match *, const char *, const char *);
+typedef void (*ResetCallback)(void);
 void
 crbehave_run(char *file,
-    KeywordCallback given, KeywordCallback when, KeywordCallback then);
+    KeywordCallback given, KeywordCallback when, KeywordCallback then,
+    ResetCallback reset);
 
 #endif

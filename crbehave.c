@@ -329,7 +329,8 @@ crbehave_run(
     char *file,
     int (*given)(struct match *, const char *, const char *),
     int (*when)(struct match *, const char *, const char *),
-    int (*then)(struct match *, const char *, const char *))
+    int (*then)(struct match *, const char *, const char *),
+    ResetCallback reset)
 {
 	FILE *fp;
 	char *line = NULL;
@@ -355,6 +356,8 @@ crbehave_run(
 			if (strncasecmp(line, heading[i].str, len) == 0) {
 				run_scenario(&scenario, NULL);
 				clear_scenario(&scenario);
+				if (reset != NULL)
+					reset();
 				init_scenario(&scenario, &line[len],
 				    heading[i].is_outline);
 				break;
@@ -368,6 +371,8 @@ crbehave_run(
 	}
 	run_scenario(&scenario, NULL);
 	clear_scenario(&scenario);
+	if (reset != NULL)
+		reset();
 
 	free(line);
 	fclose(fp);
