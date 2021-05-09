@@ -17,6 +17,7 @@ struct match
 		int val;
 		char *str;
 	} v;
+	int res;
 };
 
 typedef enum crbehave_test {

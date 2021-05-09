@@ -29,7 +29,7 @@ given(struct match *m, const char *s, const char *body)
 	    s)) {
 		if ((a = find_account(match_str(m, 1))) != NULL) {
 			a->balance = match_int(m, 2);
-			return 1;
+			CRBEHAVE_EXPECT(m, 1);
 		}
 	}
 	return -1;
@@ -41,7 +41,7 @@ when(struct match *m, const char *s, const char *body)
 	if (match(m, "(.*) withdraws (.*) coins", s)) {
 		if ((a = find_account(match_str(m, 1))) != NULL) {
 			a->balance -= match_int(m, 2);
-			return 1;
+			CRBEHAVE_EXPECT(m, 1);
 		}
 	}
 	return -1;
@@ -52,8 +52,7 @@ then(struct match *m, const char *s, const char *body)
 {
 	if (match(m, "(.*) has (.*) coins left", s)) {
 		if ((a = find_account(match_str(m, 1))) != NULL)
-			return match_expect(m, a->balance ==
-			    match_int(m, 2));
+			CRBEHAVE_EXPECT(m, a->balance == match_int(m, 2));
 	}
 	return -1;
 }

@@ -2,6 +2,7 @@
 
 #include <err.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 enum match_type {
@@ -11,12 +12,56 @@ enum match_type {
 static void match_set_type(struct match *, int);
 
 int
-match_expect(struct match *m, int val)
+match_expect(struct match *m, const char *file, int line, int res,
+    const char *exp)
 {
-	if (val == 0)
-		return 0;
+	if (res) {
+#if 0
+ 		printf("\tok\t%s:%d: %s\n", file, line, exp);
+#endif
+	} else
+		printf("\tfail\t%s:%d: %s\n", file, line, exp);
+
+	if (res)
+		m->res++;
 	else
-		return 1;
+		m->res = 0;
+
+	return res;
+}
+
+int
+match_expect_streq(struct match *m, const char *file, int line,
+    const char *val, const char *ref)
+{
+	int fail = 1;
+	int multiline = 0;
+	const char *status = "fail";
+
+	multiline = (
+	    (ref != NULL && strchr(ref, '\n') != NULL) ||
+	    (val != NULL && strchr(val, '\n') != NULL));
+
+	if (val != NULL && ref != NULL && strcmp(val, ref) == 0) {
+		fail = 0;
+		status = "ok";
+	}
+
+	if (fail == 1) {
+		printf("\t%s\t%s:%d:", status, file, line);
+
+		if (multiline)
+			printf("\n%s\n==\n%s\n^^\n", val, ref);
+		else
+			printf(" \"%s\" == \"%s\"\n", val, ref);
+	}
+
+	if (fail == 0)
+		m->res++;
+	else
+		m->res = 0;
+
+	return (fail == 1) ? 0 : 1;
 }
 
 int

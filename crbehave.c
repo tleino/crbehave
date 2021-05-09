@@ -47,9 +47,10 @@ call_step(struct crbehave_step *self, struct crbehave_example *example)
 	} else
 		title = strdup(self->title);
 
+	/* FIXME: ret is not used for anything */
 	ret = (*self->funp)(&m, title, self->body);
 
-	record_result(title, ret);
+	record_result(title, m.res ? 1 : 0);
 
 	free(title);
 

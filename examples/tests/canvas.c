@@ -12,9 +12,8 @@ static int
 given(struct match *m, const char *s, const char *body)
 {
 	if (match(m, "c is canvas\\((.*), (.*)\\)", s)) {
-		c.width = match_int(m, 1);
-		c.height = match_int(m, 2);
-		return 1;
+		CRBEHAVE_EXPECT(m, c.width = match_int(m, 1));
+		CRBEHAVE_EXPECT(m, c.height = match_int(m, 2));
 	}
 	return -1;
 }
@@ -24,10 +23,10 @@ when(struct match *m, const char *s, const char *body)
 {
 	if (match(m, "ppm is canvas_to_ppm.*", s)) {
 		ppm = fopen("/tmp/testppm", "w+");
+		CRBEHAVE_EXPECT(m, ppm != NULL);
 		if (ppm == NULL)
 			return 0;
 		ppm_write_canvas(ppm, &c);
-		return 1;
 	}
 	return -1;
 }
@@ -43,8 +42,8 @@ then(struct match *m, const char *s, const char *body)
 		fseek(ppm, 0L, SEEK_SET);
 		n = fread(buf, 1, sizeof(buf) - 1, ppm);
 		buf[n] = '\0';
-		ret = match_expect(m, strcmp(body, buf) == 0);
 		fclose(ppm);
+		CRBEHAVE_EXPECT_STREQ(m, buf, body);
 		return ret;
 	}
 	return -1;

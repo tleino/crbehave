@@ -22,7 +22,7 @@ given(struct match *m, const char *s, const char *body)
 					setmatrix(M, row, col,
 					    match_double(m, ++i));
 		}
-		return 1;
+		CRBEHAVE_EXPECT(m, 1);
 	}
 	return -1;
 }
@@ -37,7 +37,7 @@ then(struct match *m, const char *s, const char *body)
 		row = match_int(m, 1);
 		col = match_int(m, 2);
 		val = match_double(m, 3);
-		return match_expect(m, getmatrix(M, row, col) == val);
+		CRBEHAVE_EXPECT(m, getmatrix(M, row, col) == val);
 	}
 	return -1;
 }
