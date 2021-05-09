@@ -65,5 +65,5 @@ tuple_is_vector(struct tuple *t)
 int
 tuple_is_equal(struct tuple *t1, struct tuple *t2)
 {
-	return memcmp(&t1, &t2, sizeof(struct tuple));
+	return (memcmp(t1, t2, sizeof(struct tuple)) == 0);
 }
