@@ -7,6 +7,8 @@
 #include <strings.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 static void record_result(const char *line, int ret);
 
@@ -340,6 +342,7 @@ crbehave_run(
 	FILE *fp;
 	char *line = NULL;
 	size_t i, n, len;
+	int j;
 	struct crbehave_scenario scenario = { 0 };
 	static const struct {
 		const char *str;
@@ -350,6 +353,9 @@ crbehave_run(
 	};
 	int sno = 0;		/* scenario number */
 	int rsno = 0;		/* scenario number to run */
+	pid_t pid;
+	char arg[32];
+	int status;
 
 	if ((fp = fopen(file, "r")) == NULL)
 		err(1, "fopen: %s", file);
@@ -357,6 +363,11 @@ crbehave_run(
 	if (argc == 2)
 		rsno = atoi(argv[1]);
 
+	/*
+	 * Parse the scenarios, running a scenario if it was asked for,
+	 * otherwise practically just count the scenarios for running
+	 * them later, see below.
+	 */
 	n = 0;
 	while (getline(&line, &n, fp) >= 0) {
 		line[strcspn(line, "\r\n")] = '\0';
@@ -364,7 +375,7 @@ crbehave_run(
 		for (i = 0; i < ARRLEN(heading); i++) {
 			len = strlen(heading[i].str);
 			if (strncasecmp(line, heading[i].str, len) == 0) {
-				if (sno == rsno || rsno == 0)
+				if (sno == rsno)
 					run_scenario(&scenario, NULL);
 				clear_scenario(&scenario);
 				if (reset != NULL)
@@ -380,15 +391,34 @@ crbehave_run(
 		if (parse_line(line, &scenario, given, when, then) == -1)
 			errx(1, "parse error: %s", line);
 	}
-	if (sno == rsno || rsno == 0)
+	if (sno == rsno)
 		run_scenario(&scenario, NULL);
 	clear_scenario(&scenario);
 	if (reset != NULL)
 		reset();
 
+	/*
+	 * We wish to run individual scenarios in their own process for
+	 * not needing to worry about segfaults etc.
+	 */
+	if (rsno == 0) {
+		for (j = 1; j <= sno; j++) {
+			pid = fork();
+			if (pid == 0) {
+				snprintf(arg, sizeof(arg), "%d", j);
+				execl(argv[0], argv[0], arg, NULL);
+				abort();
+			} else {
+				waitpid(pid, &status, 0);
+			}
+		}
+	}
+
 	free(line);
 	fclose(fp);
 
-	printf("\n%d (pass), %d (fail), %d (missing)\n",
-	    total_pass, total_fail, total_missing);
+	if (rsno != 0) {
+		printf("\n%d (pass), %d (fail), %d (missing)\n",
+		    total_pass, total_fail, total_missing);
+	}
 }
