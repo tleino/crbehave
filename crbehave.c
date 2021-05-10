@@ -246,6 +246,9 @@ run_scenario(struct crbehave_scenario *self, struct crbehave_example *example)
 {
 	struct crbehave_step *step;
 
+	if (self->title != NULL && example == NULL)
+		printf("%3d: %s\n", self->sno, self->title);
+
 	if (self->example_field_names != NULL && example == NULL) {
 		example = self->first_example;
 		for (; example != NULL; example = example->next)
@@ -315,18 +318,19 @@ clear_scenario(struct crbehave_scenario *self)
 
 static void
 init_scenario(struct crbehave_scenario *self, const char *title,
-    bool is_outline)
+    bool is_outline, int sno)
 {
 	self->title = strdup(title);
 	if (self->title == NULL)
 		err(1, "strdup");
 	self->is_outline = is_outline;
-	if (self->title != NULL)
-		puts(self->title);
+	self->sno = sno;
 }
 
 void
 crbehave_run(
+    int argc,
+    char **argv,
     char *file,
     int (*given)(struct match *, const char *, const char *),
     int (*when)(struct match *, const char *, const char *),
@@ -344,9 +348,14 @@ crbehave_run(
 		{ .str = "Scenario outline: ", .is_outline = true },
 		{ .str = "Scenario: ", .is_outline = false }
 	};
+	int sno = 0;		/* scenario number */
+	int rsno = 0;		/* scenario number to run */
 
 	if ((fp = fopen(file, "r")) == NULL)
 		err(1, "fopen: %s", file);
+
+	if (argc == 2)
+		rsno = atoi(argv[1]);
 
 	n = 0;
 	while (getline(&line, &n, fp) >= 0) {
@@ -355,12 +364,13 @@ crbehave_run(
 		for (i = 0; i < ARRLEN(heading); i++) {
 			len = strlen(heading[i].str);
 			if (strncasecmp(line, heading[i].str, len) == 0) {
-				run_scenario(&scenario, NULL);
+				if (sno == rsno || rsno == 0)
+					run_scenario(&scenario, NULL);
 				clear_scenario(&scenario);
 				if (reset != NULL)
 					reset();
 				init_scenario(&scenario, &line[len],
-				    heading[i].is_outline);
+				    heading[i].is_outline, ++sno);
 				break;
 			}
 		}
@@ -370,7 +380,8 @@ crbehave_run(
 		if (parse_line(line, &scenario, given, when, then) == -1)
 			errx(1, "parse error: %s", line);
 	}
-	run_scenario(&scenario, NULL);
+	if (sno == rsno || rsno == 0)
+		run_scenario(&scenario, NULL);
 	clear_scenario(&scenario);
 	if (reset != NULL)
 		reset();
