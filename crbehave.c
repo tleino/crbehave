@@ -428,8 +428,9 @@ crbehave_run(
 				_exit(0);
 			} else {
 				close(pfds[1]);
-				if ((k = read(pfds[0], &c, 1)) <= 0) {
-					warn("read");
+				if ((k = read(pfds[0], &c, 1)) != 1) {
+					if (k < 0)
+						warn("read");
 					fail++;
 				} else if (c != '1') {
 					fail++;
@@ -438,6 +439,9 @@ crbehave_run(
 				}
 				close(pfds[0]);
 				waitpid(pid, &status, 0);
+				if (WIFSIGNALED(status))
+					warnx("scenario %d terminated by "
+					    "signal %d", j, WTERMSIG(status));
 			}
 		}
 	}
