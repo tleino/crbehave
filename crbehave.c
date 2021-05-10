@@ -329,7 +329,7 @@ init_scenario(struct crbehave_scenario *self, const char *title,
 	self->sno = sno;
 }
 
-void
+int
 crbehave_run(
     int argc,
     char **argv,
@@ -354,8 +354,12 @@ crbehave_run(
 	int sno = 0;		/* scenario number */
 	int rsno = 0;		/* scenario number to run */
 	pid_t pid;
-	char arg[32];
+	char arg[32], *args[3];
 	int status;
+	int pfds[2];
+	char c;
+	int fail = 0, pass = 0;
+	int k;
 
 	if ((fp = fopen(file, "r")) == NULL)
 		err(1, "fopen: %s", file);
@@ -397,28 +401,52 @@ crbehave_run(
 	if (reset != NULL)
 		reset();
 
+	free(line);
+	fclose(fp);
+
 	/*
 	 * We wish to run individual scenarios in their own process for
 	 * not needing to worry about segfaults etc.
 	 */
 	if (rsno == 0) {
 		for (j = 1; j <= sno; j++) {
+			if (pipe(pfds) != 0)
+				err(1, "pipe");
 			pid = fork();
 			if (pid == 0) {
+				close(pfds[0]);
 				snprintf(arg, sizeof(arg), "%d", j);
-				execl(argv[0], argv[0], arg, NULL);
-				abort();
+				args[0] = argv[0];
+				args[1] = arg;
+				args[2] = NULL;
+				if (crbehave_run(2, args, file,
+				    given, when, then, reset) == 0)
+					write(pfds[1], "1", 1);
+				else
+					write(pfds[1], "0", 1);
+				close(pfds[1]);
+				_exit(0);
 			} else {
+				close(pfds[1]);
+				if ((k = read(pfds[0], &c, 1)) <= 0) {
+					warn("read");
+					fail++;
+				} else if (c != '1') {
+					fail++;
+				} else {
+					pass++;
+				}
+				close(pfds[0]);
 				waitpid(pid, &status, 0);
 			}
 		}
 	}
 
-	free(line);
-	fclose(fp);
+	if (rsno == 0)
+		printf("%s: %d (pass) %d (fail)\n", argv[0], pass, fail);
 
-	if (rsno != 0) {
-		printf("\n%d (pass), %d (fail), %d (missing)\n",
-		    total_pass, total_fail, total_missing);
-	}
+	if (total_fail > 0)
+		return 1;
+	else
+		return 0;
 }
