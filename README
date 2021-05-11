@@ -9,6 +9,10 @@ The crbehave reads a specification of scenarios following the Gherkin
 given-when-then syntax and calls the respective functions for making the
 specification executable.
 
+The scenarios are tested in separate worker processes for making sure
+complete feature specifications are executed without unnecessary delays,
+even if there are crashes or slow test code.
+
 It was originally written by the author after opening the first pages of
 Jamis Buck's excellent book, the "The Ray Tracer Challenge - A
 Test-Driven Guide to Your First 3D Renderer", after finding, at that
