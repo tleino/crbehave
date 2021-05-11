@@ -58,4 +58,8 @@ struct crbehave_scenario {
 	int sno;			/* scenario number */
 };
 
+int				 crbehave_queue_worker(int,
+				     void (*)(int, void *), void *);
+int				 crbehave_reap_workers(int *, int *);
+
 #endif

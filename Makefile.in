@@ -10,7 +10,7 @@ mandir = $(datarootdir)/man
 includedir = $(prefix)/include
 
 PROG = crbehave
-OBJS = table.o match.o expand.o crbehave.o
+OBJS = worker.o table.o match.o expand.o crbehave.o
 
 INSTALL = install
 INSTALLFLAGS =

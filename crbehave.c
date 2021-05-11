@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <sys/wait.h>
 
 static void record_result(const char *line, int ret);
 
@@ -248,9 +247,6 @@ run_scenario(struct crbehave_scenario *self, struct crbehave_example *example)
 {
 	struct crbehave_step *step;
 
-	if (self->title != NULL && example == NULL)
-		printf("%3d: %s\n", self->sno, self->title);
-
 	if (self->example_field_names != NULL && example == NULL) {
 		example = self->first_example;
 		for (; example != NULL; example = example->next)
@@ -260,6 +256,9 @@ run_scenario(struct crbehave_scenario *self, struct crbehave_example *example)
 
 	for (step = self->first_step; step != NULL; step = step->next)
 		call_step(step, example);
+
+	if (self->title != NULL && example == NULL)
+		printf("%3d: %s\n", self->sno, self->title);
 }
 
 static void
@@ -329,6 +328,35 @@ init_scenario(struct crbehave_scenario *self, const char *title,
 	self->sno = sno;
 }
 
+struct workfunc
+{
+	int sno;
+	char *arg0;
+	char *file;
+	KeywordCallback given;
+	KeywordCallback when;
+	KeywordCallback then;
+	ResetCallback reset;
+};
+
+static void
+workfunc(int fd, void *data)
+{
+	struct workfunc *wf = (struct workfunc *) data;
+	char arg[32], *args[3];
+
+	snprintf(arg, sizeof(arg), "%d", wf->sno);
+	args[0] = wf->arg0;
+	args[1] = arg;
+	args[2] = NULL;
+
+	if (crbehave_run(2, args, wf->file,
+	    wf->given, wf->when, wf->then, wf->reset) == 0)
+		write(fd, "1", 1);
+	else
+		write(fd, "0", 1);
+}
+
 int
 crbehave_run(
     int argc,
@@ -353,13 +381,7 @@ crbehave_run(
 	};
 	int sno = 0;		/* scenario number */
 	int rsno = 0;		/* scenario number to run */
-	pid_t pid;
-	char arg[32], *args[3];
-	int status;
-	int pfds[2];
-	char c;
 	int fail = 0, pass = 0;
-	int k;
 
 	if ((fp = fopen(file, "r")) == NULL)
 		err(1, "fopen: %s", file);
@@ -409,41 +431,23 @@ crbehave_run(
 	 * not needing to worry about segfaults etc.
 	 */
 	if (rsno == 0) {
+		struct workfunc wf = { 0 };
+
+		wf.given = given;
+		wf.when = when;
+		wf.then = then;
+		wf.reset = reset;
+		wf.arg0 = argv[0];
+		wf.file = file;
+
 		for (j = 1; j <= sno; j++) {
-			if (pipe(pfds) != 0)
-				err(1, "pipe");
-			pid = fork();
-			if (pid == 0) {
-				close(pfds[0]);
-				snprintf(arg, sizeof(arg), "%d", j);
-				args[0] = argv[0];
-				args[1] = arg;
-				args[2] = NULL;
-				if (crbehave_run(2, args, file,
-				    given, when, then, reset) == 0)
-					write(pfds[1], "1", 1);
-				else
-					write(pfds[1], "0", 1);
-				close(pfds[1]);
-				_exit(0);
-			} else {
-				close(pfds[1]);
-				if ((k = read(pfds[0], &c, 1)) != 1) {
-					if (k < 0)
-						warn("read");
-					fail++;
-				} else if (c != '1') {
-					fail++;
-				} else {
-					pass++;
-				}
-				close(pfds[0]);
-				waitpid(pid, &status, 0);
-				if (WIFSIGNALED(status))
-					warnx("scenario %d terminated by "
-					    "signal %d", j, WTERMSIG(status));
-			}
+			wf.sno = j;
+			while (crbehave_queue_worker(j, workfunc, &wf) == 0)
+				crbehave_reap_workers(&pass, &fail);
 		}
+
+		while (crbehave_reap_workers(&pass, &fail) > 0)
+			;
 	}
 
 	if (rsno == 0)
