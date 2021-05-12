@@ -251,11 +251,10 @@ run_scenario(struct crbehave_scenario *self, struct crbehave_example *example)
 		example = self->first_example;
 		for (; example != NULL; example = example->next)
 			run_scenario(self, example);
-		return;
+	} else {
+		for (step = self->first_step; step != NULL; step = step->next)
+			call_step(step, example);
 	}
-
-	for (step = self->first_step; step != NULL; step = step->next)
-		call_step(step, example);
 
 	if (self->title != NULL && example == NULL)
 		printf("%3d: %s\n", self->sno, self->title);
