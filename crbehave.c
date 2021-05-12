@@ -382,12 +382,41 @@ crbehave_run(
 	int sno = 0;		/* scenario number */
 	int rsno = 0;		/* scenario number to run */
 	int fail = 0, pass = 0;
+	int ch, njobs = 6;
+	char *arg0 = argv[0];
+
+	/*
+	 * We need to explicitly set optind here, because we're re-entering
+	 * here from the worker process and we need to reset the optind
+	 * back to the original value.
+	 */
+	optind = 1;
+
+	while ((ch = getopt(argc, argv, "j:")) != -1) {
+		switch (ch) {
+		case 'j':
+			njobs = atoi(optarg);
+			if (njobs == 0 || njobs < 0 || njobs > 999)
+				errx(1, "invalid max jobs limit %d "
+				    "(should be 1-999)", njobs);
+			break;
+		default:
+			fprintf(stderr, "Usage: %s [-j <jobs>] [scenario]\n",
+			    arg0);
+			exit(1);
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	if ((fp = fopen(file, "r")) == NULL)
 		err(1, "fopen: %s", file);
 
-	if (argc == 2)
-		rsno = atoi(argv[1]);
+	if (*argv)
+		rsno = atoi(*argv);
+	else
+		if (init_workers(njobs) == -1)
+			err(1, "init_workers");
 
 	/*
 	 * Parse the scenarios, running a scenario if it was asked for,
@@ -437,7 +466,7 @@ crbehave_run(
 		wf.when = when;
 		wf.then = then;
 		wf.reset = reset;
-		wf.arg0 = argv[0];
+		wf.arg0 = arg0;
 		wf.file = file;
 
 		for (j = 1; j <= sno; j++) {
@@ -451,7 +480,9 @@ crbehave_run(
 	}
 
 	if (rsno == 0)
-		printf("%s: %d (pass) %d (fail)\n", argv[0], pass, fail);
+		printf("%s: %d (pass) %d (fail)\n", arg0, pass, fail);
+
+	free_workers();
 
 	if (total_fail > 0)
 		return 1;

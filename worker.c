@@ -3,6 +3,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <err.h>
 #include <assert.h>
 #include <sys/wait.h>
@@ -13,10 +14,35 @@ struct crbehave_worker {
 	int sno;
 };
 
-#define MAX_WORKERS 6
-static struct pollfd pollfds[MAX_WORKERS];
-static struct crbehave_worker workers[MAX_WORKERS];
-static int nworkers;
+static struct pollfd *pollfds;
+static struct crbehave_worker *workers;
+static int nworkers, maxworkers;
+
+int
+init_workers(int n)
+{
+	maxworkers = n;
+	pollfds = calloc(maxworkers, sizeof(struct pollfd));
+	if (pollfds == NULL)
+		return -1;
+	workers = calloc(maxworkers, sizeof(struct crbehave_worker));
+	if (workers == NULL)
+		return -1;
+	return 0;
+}
+
+void
+free_workers()
+{
+	if (pollfds != NULL) {
+		free(pollfds);
+		pollfds = NULL;
+	}
+	if (workers != NULL) {
+		free(workers);
+		workers = NULL;
+	}
+}
 
 /*
  * Returns 0 if the queue is full.
@@ -27,7 +53,7 @@ crbehave_queue_worker(int sno, void (*workfunc)(int, void *), void *data)
 	int fds[2];
 	pid_t pid;
 
-	if (nworkers == MAX_WORKERS)
+	if (nworkers == maxworkers)
 		return 0;
 
 	if (pipe(fds) != 0)
