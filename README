@@ -18,3 +18,13 @@ Jamis Buck's excellent book, the "The Ray Tracer Challenge - A
 Test-Driven Guide to Your First 3D Renderer", after finding, at that
 time, there was no adequate behavior driven development framework for C
 that would satisfy the author's taste.
+
+Build & Run
+===========
+
+./configure ~
+make install
+
+cd examples
+./configure ~
+make check
