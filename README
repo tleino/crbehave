@@ -19,6 +19,12 @@ Test-Driven Guide to Your First 3D Renderer", after finding, at that
 time, there was no adequate behavior driven development framework for C
 that would satisfy the author's taste.
 
+Dependencies
+============
+
+None as long as you're on a conventional Unix-like OS base system with
+C compiler and standard headers installed.
+
 Build & Run
 ===========
 
