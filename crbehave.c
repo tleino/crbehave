@@ -9,10 +9,11 @@
 #include <ctype.h>
 #include <unistd.h>
 
-static void record_result(const char *line, int ret);
+static void record_result(const char *, int, int, int);
 
 int total_pass, total_fail, total_missing;
 int scenario_number;
+static int verboseflag;
 
 #ifndef ARRLEN
 #define ARRLEN(_x) sizeof((_x)) / sizeof((_x)[0])
@@ -51,7 +52,7 @@ call_step(struct crbehave_step *self, struct crbehave_example *example)
 	/* FIXME: ret is not used for anything */
 	ret = (*self->funp)(&m, title, self->body);
 
-	record_result(title, m.res ? 1 : 0);
+	record_result(title, self->scenario->sno, self->type, m.res ? 1 : 0);
 
 	free(title);
 
@@ -61,17 +62,31 @@ call_step(struct crbehave_step *self, struct crbehave_example *example)
 }
 
 static void
-record_result(const char *line, int ret)
+record_result(const char *line, int sno, int type, int ret)
 {
+	char *typestr;
+
+	switch (type) {
+	case CRBEHAVE_TEST_GIVEN:
+		typestr = "GIVEN";
+		break;
+	case CRBEHAVE_TEST_WHEN:
+		typestr = "WHEN";
+		break;
+	case CRBEHAVE_TEST_THEN:
+		typestr = "THEN";
+		break;
+	}
+
 	switch (ret) {
 	case 0:
-		printf("%10s: %s\n", "fail", line);
+		printf("%3d\t%s\t%s\t%s\n", sno, "fail", typestr, line);
 		total_fail++;
 		break;
 	case 1:
-#if 0
-		printf("%10s: %s\n", "pass", line);
-#endif
+		if (verboseflag)
+			printf("%3d\t%s\t%s\t%s\n", sno, "pass", typestr,
+			    line);
 		total_pass++;
 		break;
 	case 2:	/* do not count, do not show, e.g. Scenario */
@@ -121,7 +136,8 @@ static struct crbehave_step *
 add_step(
     struct crbehave_scenario *scenario,
     const char *title,
-    KeywordCallback funp)
+    KeywordCallback funp,
+    int type)
 {
 	struct crbehave_step *step, *n;
 
@@ -131,6 +147,8 @@ add_step(
 
 	step->title = strdup(title);
 	step->funp = funp;
+	step->scenario = scenario;
+	step->type = type;
 
 	/*
 	 * Make sure the step always has a function pointer to call,
@@ -140,9 +158,10 @@ add_step(
 	 */
 	if (step->funp != NULL)
 		scenario->last_step_with_callback = step;
-	else if (scenario->last_step_with_callback != NULL)
+	else if (scenario->last_step_with_callback != NULL) {
 		step->funp = scenario->last_step_with_callback->funp;
-	else {
+		step->type = scenario->last_step_with_callback->type;
+	} else {
 		printf("add_step returned null for %s\n", step->title);
 		return NULL;
 	}
@@ -174,12 +193,13 @@ parse_line(
 	struct {
 		char *keyword;
 		int (*funp)(struct match *, const char *, const char *);
+		int type;
 	} test[] = {
-		{ "Given ", given },
-		{ "When ", when },
-		{ "Then ", then },
-		{ "And ", NULL },
-		{ "* ", NULL }
+		{ "Given ", given, CRBEHAVE_TEST_GIVEN },
+		{ "When ", when, CRBEHAVE_TEST_WHEN },
+		{ "Then ", then, CRBEHAVE_TEST_THEN },
+		{ "And ", NULL, 0 },
+		{ "* ", NULL, 0 }
 	};
 	size_t i, len;
 	char *p;
@@ -207,7 +227,8 @@ parse_line(
 	for (i = 0; i < ARRLEN(test); i++) {
 		len = strlen(test[i].keyword);
 		if (strncasecmp(line, test[i].keyword, len) == 0) {
-			step = add_step(scenario, &line[len], test[i].funp);
+			step = add_step(scenario, &line[len], test[i].funp,
+			    test[i].type);
 			return (step != NULL) ? 1 : -1;
 		}
 	}
@@ -391,7 +412,7 @@ crbehave_run(
 	 */
 	optind = 1;
 
-	while ((ch = getopt(argc, argv, "j:")) != -1) {
+	while ((ch = getopt(argc, argv, "vj:")) != -1) {
 		switch (ch) {
 		case 'j':
 			njobs = atoi(optarg);
@@ -399,9 +420,12 @@ crbehave_run(
 				errx(1, "invalid max jobs limit %d "
 				    "(should be 1-999)", njobs);
 			break;
+		case 'v':
+			verboseflag = 1;
+			break;
 		default:
-			fprintf(stderr, "Usage: %s [-j <jobs>] [scenario]\n",
-			    arg0);
+			fprintf(stderr, "Usage: %s [-v] [-j <jobs>] "
+			    "[scenario]\n", arg0);
 			exit(1);
 		}
 	}

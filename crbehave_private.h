@@ -24,6 +24,8 @@ typedef enum crbehave_test {
 	CRBEHAVE_TEST_GIVEN, CRBEHAVE_TEST_WHEN, CRBEHAVE_TEST_THEN
 } CRBehaveTest;
 
+struct crbehave_scenario;
+
 struct crbehave_step
 {
 	CRBehaveTest type;
@@ -35,9 +37,8 @@ struct crbehave_step
 	size_t body_len;
 	bool collect_examples;
 	struct crbehave_step *next;
+	struct crbehave_scenario *scenario;
 };
-
-struct crbehave_scenario;
 
 struct crbehave_example {
 	char *line;
