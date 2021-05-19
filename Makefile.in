@@ -13,7 +13,7 @@ PROG = crbehave
 OBJS = worker.o table.o match.o expand.o crbehave.o
 
 INSTALL = install
-INSTALLFLAGS =
+INSTALLFLAGS = -D
 
 all: $(PROG).a
 
@@ -27,23 +27,17 @@ clean:
 	rm -f $(OBJS) $(PROG).a
 
 install: $(PROG).a
-	if [ ! -x $(DESTDIR)$(libdir) ] ; then \
-		mkdir -p $(DESTDIR)$(libdir) ; fi
-	if [ ! -x $(DESTDIR)$(libdir)/pkgconfig ] ; then \
-		mkdir -p $(DESTDIR)$(libdir)/pkgconfig ; fi
-	if [ ! -x $(DESTDIR)$(includedir) ] ; then \
-		mkdir -p $(DESTDIR)$(includedir) ; fi
-	$(INSTALL) $(INSTALLFLAGS) $(PROG).a $(DESTDIR)$(libdir)
-	cp crbehave.pc $(DESTDIR)$(libdir)/pkgconfig
-	cp crbehave.h $(DESTDIR)$(includedir)
+	$(INSTALL) $(INSTALLFLAGS) -m 444 $(PROG).a \
+		$(DESTDIR)$(libdir)/
+	$(INSTALL) $(INSTALLFLAGS) -m 444 crbehave.pc \
+		$(DESTDIR)$(libdir)/pkgconfig/
+	$(INSTALL) $(INSTALLFLAGS) -m 444 crbehave.h \
+		$(DESTDIR)$(includedir)/
 
 uninstall:
-	if [ -e $(DESTDIR)$(libdir)/$(PROG).a ] ; then \
-		rm $(DESTDIR)$(libdir)/$(PROG).a ; fi
-	if [ -e $(DESTDIR)$(libdir)/pkgconfig/$(PROG).pc ] ; then \
-		rm $(DESTDIR)$(libdir)/pkgconfig/$(PROG).pc ; fi
-	if [ -e $(includedir)/crbehave.h ] ; then \
-		rm $(DESTDIR)$(includedir)/crbehave.h ; fi
+	rm -f $(DESTDIR)$(libdir)/$(PROG).a
+	rm -f $(DESTDIR)$(libdir)/pkgconfig/$(PROG).pc
+	rm -f $(DESTDIR)$(includedir)/crbehave.h
 
 # Dependencies
 crbehave.o: crbehave.c crbehave_private.h crbehave.h expand.h
