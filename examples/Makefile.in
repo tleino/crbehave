@@ -1,31 +1,36 @@
-CRBEHAVE_CFLAGS = @CRBEHAVE_CFLAGS@
-CRBEHAVE_LDFLAGS = @CRBEHAVE_LDFLAGS@
-CFLAGS = $(CRBEHAVE_CFLAGS) -Wall -g -std=c99
-LDFLAGS = $(CRBEHAVE_LDFLAGS)
+CFLAGS = -Wall -g -std=c99
+LDFLAGS =
+TESTS_CFLAGS = @TESTS_CFLAGS@ $(LDFLAGS)
+TESTS_LDFLAGS = @TESTS_LDFLAGS@ $(CFLAGS)
 
 SRCS=tuple.c ppm.c
 OBJS=$(SRCS:.c=.o)
+TESTS=tests/tuples tests/canvas tests/matrix tests/bank
 
-TEST_SRCS=tests/tuples.c tests/canvas.c tests/matrix.c tests/bank.c
-TEST_OBJS=$(TEST_SRCS:.c=.o)
-TEST_PROGS=$(TEST_SRCS:.c=)
+all: $(OBJS)
 
-all: $(OBJS) $(TEST_OBJS) $(TEST_PROGS)
+tests/tuples: tests/tuples.c tuple.o
+	$(CC) $(TESTS_CFLAGS) tests/tuples.c -o$@ tuple.o $(TESTS_LDFLAGS)
+
+tests/canvas: tests/canvas.c ppm.o
+	$(CC) $(TESTS_CFLAGS) tests/canvas.c -o$@ ppm.o $(TESTS_LDFLAGS)
+
+tests/matrix: tests/matrix.c
+	$(CC) $(TESTS_CFLAGS) tests/matrix.c -o$@ $(TESTS_LDFLAGS)
+
+tests/bank: tests/bank.c
+	$(CC) $(TESTS_CFLAGS) tests/bank.c -o$@ $(TESTS_LDFLAGS)
+
+check: $(TESTS)
+	@cd tests && ./tuples
+	@cd tests && ./canvas
+	@cd tests && ./matrix
+	@cd tests && ./bank
+
+clean:
+	rm -f $(PROG) $(OBJS) $(TESTS)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
-$(TEST_PROGS): $(TEST_OBJS)
-	$(CC) $@.o $(OBJS) -o$@ $(LDFLAGS)
-
-$(TEST_OBJS):
-	$(CC) $(CFLAGS) -c $(@:.o=.c) -o$@
-
-check: $(TEST_PROGS)
-	cd tests && ./tuples
-	cd tests && ./canvas
-	cd tests && ./matrix
-	cd tests && ./bank
-
-clean:
-	rm -f $(PROG) $(OBJS) $(TEST_OBJS)
+.PHONY: check

@@ -1,31 +1,69 @@
 #!/bin/sh
 # Usage: ./configure [install prefix]
 
-which pkg-config >/dev/null
-if [ "$?" -ne 0 ] ; then
-	echo "You need to have pkg-config installed and in PATH."
-	exit 1
-fi
+check_pkg() {
+	PKG=$1
 
-prefix=/usr/local
-if [ "$#" -eq 1 ] ; then prefix=$1 ; fi
-echo "prefix=${prefix}"
+	echo "pkg-config ${PKG}"
+	pkg-config $PKG
+	RET=$?
+	if [ "${RET}" -eq 127 ] ; then
+		echo "You need to have pkg-config."
+		exit 1
+	elif [ "${RET}" -ne 0 ] ; then
+		echo "You need to have '${PKG}' package installed."
+		if [ "${PKG_CONFIG_PATH}" != "" ] ; then
+			echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"
+		else
+			echo "Note: PKG_CONFIG_PATH is not set."
+		fi
+		exit 1
+	fi
+}
 
-echo "check: crbehave"
-pkg-config crbehave
-if [ "$?" -ne 0 ] ; then
-	echo "You need to have 'crbehave' pkg-config package installed."
-	echo "Verify also your PKG_CONFIG_PATH."
-	exit 1
+check_pkgs() {
+	PKGS=$*
+	for a in $PKGS ; do
+		check_pkg $a
+	done
+
+	PKGS_CFLAGS=$(pkg-config ${PKGS} --cflags)
+	PKGS_LDFLAGS=$(pkg-config ${PKGS} --libs)
+}
+
+check_args() {
+	while [ $# -ne 0 ] ; do
+		case $1 in
+			--enable-tests ) WANT_TESTS=1 ;;
+			-* )
+				if [ "$1" != "--help" ] ; then
+					echo "$0: unknown option: $1"
+				fi
+				echo "Usage: $0 [--enable-tests] [prefix]"
+				exit 1
+			;;
+			* ) prefix=$1 ;;
+		esac
+		shift
+	done
+	echo "prefix=${prefix}"
+}
+
+WANT_TESTS=0
+prefix="/usr/local"
+check_args $*
+
+if [ ${WANT_TESTS} -eq 1 ] ; then
+	check_pkgs crbehave
+	TESTS_CFLAGS=${PKGS_CFLAGS}
+	TESTS_LDFLAGS=${PKGS_LDFLAGS}
+	echo "TESTS_CFLAGS=${TESTS_CFLAGS}"
+	echo "TESTS_LDFLAGS=${TESTS_LDFLAGS}"
 fi
-CRBEHAVE_CFLAGS=$(pkg-config crbehave --cflags)
-echo "CRBEHAVE_CFLAGS=${CRBEHAVE_CFLAGS}"
-CRBEHAVE_LDFLAGS=$(pkg-config crbehave --libs)
-echo "CRBEHAVE_LDFLAGS=${CRBEHAVE_LDFLAGS}"
 
 echo "create: Makefile"
 sed \
 	-e "s|@prefix@|${prefix}|g" \
-	-e "s|@CRBEHAVE_CFLAGS@|${CRBEHAVE_CFLAGS}|g" \
-	-e "s|@CRBEHAVE_LDFLAGS@|${CRBEHAVE_LDFLAGS}|g" \
+	-e "s|@TESTS_CFLAGS@|${TESTS_CFLAGS}|g" \
+	-e "s|@TESTS_LDFLAGS@|${TESTS_LDFLAGS}|g" \
 	Makefile.in >Makefile
