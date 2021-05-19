@@ -1,11 +1,25 @@
 #!/bin/sh
-# Usage: ./configure [install prefix]
 
-prefix=/usr/local
+check_args() {
+	while [ $# -ne 0 ] ; do
+		case $1 in
+			-* )
+				if [ "$1" != "--help" ] ; then
+					echo "$0: unknown option: $1"
+				fi
+				echo "Usage: $0 [prefix]"
+				exit 1
+			;;
+			* ) prefix=$1 ;;
+		esac
+		shift
+	done
+	echo "prefix=${prefix}"
+}
+
 PROG=crbehave
-
-if [ "$#" -eq 1 ] ; then prefix=$1 ; fi
-echo "prefix=${prefix}"
+prefix=/usr/local
+check_args $*
 
 echo "create: ${PROG}.pc"
 sed "s|@prefix@|${prefix}|g" ${PROG}.pc.in >${PROG}.pc
