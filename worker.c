@@ -62,6 +62,7 @@ crbehave_queue_worker(int sno, void (*workfunc)(int, void *), void *data)
 	if (pid == 0) {
 		close(fds[0]);
 		workfunc(fds[1], data);
+		fflush(stdout);
 		close(fds[1]);
 		_exit(0);
 	} else {
