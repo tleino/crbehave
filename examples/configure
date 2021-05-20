@@ -1,5 +1,4 @@
 #!/bin/sh
-# Usage: ./configure [install prefix]
 
 check_pkg() {
 	PKG=$1
