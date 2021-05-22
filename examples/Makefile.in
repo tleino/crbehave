@@ -41,3 +41,6 @@ clean:
 	$(CC) $(CFLAGS) -c $<
 
 .PHONY: check
+
+ppm.o: ppm.c canvas.h
+tuple.o: tuple.c tuple.h
