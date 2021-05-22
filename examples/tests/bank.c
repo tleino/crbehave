@@ -22,7 +22,7 @@ find_account(const char *name)
 	return NULL;
 }
 
-static int
+static void
 given(struct match *m, const char *s, const char *body)
 {
 	if (match(m, "(.*) logs into bank and has balance of (.*) coins",
@@ -32,10 +32,9 @@ given(struct match *m, const char *s, const char *body)
 			CRBEHAVE_EXPECT(m, 1);
 		}
 	}
-	return -1;
 }
 
-static int
+static void
 when(struct match *m, const char *s, const char *body)
 {
 	if (match(m, "(.*) withdraws (.*) coins", s)) {
@@ -44,17 +43,15 @@ when(struct match *m, const char *s, const char *body)
 			CRBEHAVE_EXPECT(m, 1);
 		}
 	}
-	return -1;
 }
 
-static int
+static void
 then(struct match *m, const char *s, const char *body)
 {
 	if (match(m, "(.*) has (.*) coins left", s)) {
 		if ((a = find_account(match_str(m, 1))) != NULL)
 			CRBEHAVE_EXPECT(m, a->balance == match_int(m, 2));
 	}
-	return -1;
 }
 
 int

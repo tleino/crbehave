@@ -49,8 +49,7 @@ call_step(struct crbehave_step *self, struct crbehave_example *example)
 	} else
 		title = strdup(self->title);
 
-	/* FIXME: ret is not used for anything */
-	ret = (*self->funp)(&m, title, self->body);
+	(*self->funp)(&m, title, self->body);
 
 	record_result(title, self->scenario->sno, self->type, m.res ? 1 : 0);
 
@@ -192,7 +191,7 @@ parse_line(
 	size_t n_spaces_skipped = 0;
 	struct {
 		char *keyword;
-		int (*funp)(struct match *, const char *, const char *);
+		KeywordCallback funp;
 		int type;
 	} test[] = {
 		{ "Given ", given, CRBEHAVE_TEST_GIVEN },
@@ -404,9 +403,7 @@ int
 crbehave_run(
     int argc,
     char **argv,
-    int (*given)(struct match *, const char *, const char *),
-    int (*when)(struct match *, const char *, const char *),
-    int (*then)(struct match *, const char *, const char *),
+    KeywordCallback given, KeywordCallback when, KeywordCallback then,
     ResetCallback reset)
 {
 	static FILE *fp;

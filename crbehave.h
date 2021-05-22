@@ -55,7 +55,7 @@ int match_expect_streq(struct match *, const char *, int, const char *,
  */
 int parse_table_row(char *, char **, size_t);
 
-typedef int (*KeywordCallback)(struct match *, const char *, const char *);
+typedef void (*KeywordCallback)(struct match *, const char *, const char *);
 typedef void (*ResetCallback)(void);
 int
 crbehave_run(int argc, char **argv,

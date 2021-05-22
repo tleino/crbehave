@@ -35,7 +35,7 @@ find_tuple(const char *name)
 	return &ctx.tuple[ctx.n++];
 }
 
-static int
+static void
 given(struct match *m, const char *s, const char *body)
 {
 	struct tuple *t;
@@ -64,10 +64,9 @@ given(struct match *m, const char *s, const char *body)
 		    match_double(m, 4));
 		CRBEHAVE_EXPECT(m, 1);
 	}
-	return -1;
 }
 
-static int
+static void
 then(struct match *m, const char *s, const char *body)
 {
 	struct tuple		*t, *t2;
@@ -127,7 +126,6 @@ then(struct match *m, const char *s, const char *body)
 		tuple_sub(t, t2);
 		CRBEHAVE_EXPECT(m, tuple_is_equal(t, &ref));
 	}
-	return -1;
 }
 
 int

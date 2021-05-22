@@ -6,7 +6,7 @@
 #define getmatrix(_M, row, col) (_M)[row * 4 + col]
 double M[4 * 4];
 
-static int
+static void
 given(struct match *m, const char *s, const char *body)
 {
 	int i, row, col;
@@ -24,10 +24,9 @@ given(struct match *m, const char *s, const char *body)
 		}
 		CRBEHAVE_EXPECT(m, 1);
 	}
-	return -1;
 }
 
-static int
+static void
 then(struct match *m, const char *s, const char *body)
 {
 	int row, col;
@@ -39,7 +38,6 @@ then(struct match *m, const char *s, const char *body)
 		val = match_double(m, 3);
 		CRBEHAVE_EXPECT(m, getmatrix(M, row, col) == val);
 	}
-	return -1;
 }
 
 int

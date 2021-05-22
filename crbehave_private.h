@@ -29,7 +29,7 @@ struct crbehave_scenario;
 struct crbehave_step
 {
 	CRBehaveTest type;
-	int (*funp)(struct match *, const char *, const char *);
+	KeywordCallback funp;
 	char *title;
 	size_t body_offset;
 	char *body;
