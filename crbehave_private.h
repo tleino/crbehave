@@ -57,6 +57,7 @@ struct crbehave_scenario {
 	bool is_outline;
 	bool collect_examples;	
 	int sno;			/* scenario number */
+	struct crbehave_scenario *next;
 };
 
 int				 init_workers(int);

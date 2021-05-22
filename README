@@ -11,7 +11,8 @@ specification executable.
 
 The scenarios are tested in separate worker processes for making sure
 complete feature specifications are executed without unnecessary delays,
-even if there are crashes or slow test code.
+even if there are crashes or slow test code. The output should be piped
+through a sort for making sure the reports are diff-able.
 
 It was originally written by the author after opening the first pages of
 Jamis Buck's excellent book, the "The Ray Tracer Challenge - A
@@ -25,12 +26,33 @@ Dependencies
 None as long as you're on a conventional Unix-like OS base system with
 C compiler and standard headers installed.
 
-Build & Run
-===========
+Build and run tests
+===================
 
 ./configure ~
 make install
 
 cd examples
-./configure ~
+./configure --enable-tests ~
 make check
+
+Run example tests from command line
+===================================
+
+cd examples/tests
+for a in tuples matrix bank canvas ; do
+  ./${a} <${a}.feature | sort -n | tee ${a}.report
+done
+
+Command line options
+====================
+
+The test programs accept the following command line options:
+
+ -v
+	Verbose output
+ -j<n>
+	Specify the maximum number of worker processes
+
+The test specification is read from stdin and the report is pushed
+to stdout.

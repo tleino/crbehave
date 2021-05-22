@@ -133,5 +133,5 @@ then(struct match *m, const char *s, const char *body)
 int
 main(int argc, char *argv[])
 {
-	crbehave_run(argc, argv, "tuples.feature", given, NULL, then, reset);
+	crbehave_run(argc, argv, given, NULL, then, reset);
 }

@@ -1,17 +1,13 @@
 all: tuples matrix canvas bank
 
 tuples: tuples.feature
-	make -C .. tests/tuples
-	./tuples
+	make -C .. tests/tuples.report
 matrix: matrix.feature
-	make -C .. tests/matrix
-	./matrix
+	make -C .. tests/matrix.report
 canvas: canvas.feature
-	make -C .. tests/canvas
-	./canvas
+	make -C .. tests/canvas.report
 bank: bank.feature
-	make -C .. tests/bank
-	./bank
+	make -C .. tests/bank.report
 clean:
 	rm -f tuples matrix canvas bank
 

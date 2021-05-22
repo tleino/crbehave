@@ -1,3 +1,5 @@
+.SUFFIXES: .feature .report
+
 CFLAGS = -Wall -g -std=c99
 LDFLAGS =
 TESTS_CFLAGS = @TESTS_CFLAGS@ $(LDFLAGS)
@@ -5,32 +7,40 @@ TESTS_LDFLAGS = @TESTS_LDFLAGS@ $(CFLAGS)
 
 SRCS=tuple.c ppm.c
 OBJS=$(SRCS:.c=.o)
-TESTS=tests/tuples tests/canvas tests/matrix tests/bank
+REPORTS=\
+	tests/tuples.report \
+	tests/canvas.report \
+	tests/matrix.report \
+	tests/bank.report
 
 all: $(OBJS)
 
 tests/tuples: tests/tuples.c tuple.o
 	$(CC) $(TESTS_CFLAGS) tests/tuples.c -o$@ tuple.o $(TESTS_LDFLAGS)
-
 tests/canvas: tests/canvas.c ppm.o
 	$(CC) $(TESTS_CFLAGS) tests/canvas.c -o$@ ppm.o $(TESTS_LDFLAGS)
-
 tests/matrix: tests/matrix.c
 	$(CC) $(TESTS_CFLAGS) tests/matrix.c -o$@ $(TESTS_LDFLAGS)
-
 tests/bank: tests/bank.c
 	$(CC) $(TESTS_CFLAGS) tests/bank.c -o$@ $(TESTS_LDFLAGS)
 
-check: $(TESTS)
-	@cd tests && ./tuples
-	@cd tests && ./canvas
-	@cd tests && ./matrix
-	@cd tests && ./bank
+.feature.report:
+	$(@:.report=) < $< | sort -n | tee $@
+
+tests/tuples.report: tests/tuples tests/tuples.feature
+tests/canvas.report: tests/canvas tests/canvas.feature
+tests/matrix.report: tests/matrix tests/matrix.feature
+tests/bank.report: tests/bank tests/bank.feature
+
+check: $(REPORTS)
 
 clean:
-	rm -f $(PROG) $(OBJS) $(TESTS)
+	rm -f $(PROG) $(OBJS) $(TESTS) $(REPORTS:.report=)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
 .PHONY: check
+
+ppm.o: ppm.c canvas.h
+tuple.o: tuple.c tuple.h

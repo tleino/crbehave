@@ -52,5 +52,5 @@ then(struct match *m, const char *s, const char *body)
 int
 main(int argc, char *argv[])
 {
-	crbehave_run(argc, argv, "canvas.feature", given, when, then, NULL);
+	crbehave_run(argc, argv, given, when, then, NULL);
 }
