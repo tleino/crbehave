@@ -368,6 +368,7 @@ struct workfunc
 	KeywordCallback then;
 	ResetCallback reset;
 	struct crbehave_scenario *scenario;
+	struct crbehave_scenario *head;
 };
 
 static void
@@ -375,6 +376,7 @@ workfunc(int fd, void *data)
 {
 	struct workfunc *wf = (struct workfunc *) data;
 	char arg[32], *args[3];
+	struct crbehave_scenario *np, *next;
 
 	snprintf(arg, sizeof(arg), "%d", wf->sno);
 	args[0] = wf->arg0;
@@ -386,6 +388,16 @@ workfunc(int fd, void *data)
 		write(fd, "1", 1);
 	else
 		write(fd, "0", 1);
+
+	/*
+	 * Make analyzers happy, even though after workfunc exits,
+	 * the process exits.
+	 */
+	for (np = wf->head; np != NULL; np = next) {
+		next = np->next;
+		free_scenario(np);
+	}
+	free_workers();
 }
 
 int
@@ -401,7 +413,7 @@ crbehave_run(
 	char *line = NULL;
 	size_t i, n, len;
 	int j;
-	struct crbehave_scenario *scenario = NULL, *np, *next;
+	struct crbehave_scenario *scenario = NULL, *np, *next, *cs;
 	static const struct {
 		const char *str;
 		bool is_outline;
@@ -455,6 +467,7 @@ crbehave_run(
 	 * Parse the scenarios.
 	 */
 	n = 0;
+	cs = NULL;
 	while (getline(&line, &n, fp) >= 0) {
 		line[strcspn(line, "\r\n")] = '\0';
 
@@ -463,31 +476,43 @@ crbehave_run(
 			if (strncasecmp(line, heading[i].str, len) == 0) {
 				if (reset != NULL)
 					reset();
-				add_scenario(&scenario, &line[len],
-				    heading[i].is_outline, ++sno);
+				sno++;
+				if (rsno == sno || rsno == 0) {
+					add_scenario(&scenario, &line[len],
+					    heading[i].is_outline, sno);
+					cs = scenario;
+				} else
+					cs = NULL;
 				break;
 			}
 		}
 		if (i < ARRLEN(heading))
 			continue;
 	
-		if (parse_line(line, scenario, given, when, then) == -1)
+		if (cs != NULL &&
+		    parse_line(line, cs, given, when, then) == -1)
 			errx(1, "parse error: %s", line);
 	}
 	free(line);
+	fclose(fp);
 
 	/*
 	 * Queue the scenarios or run one directly.
 	 */
-	for (np = scenario; np != NULL; np = np->next) {
+	for (np = scenario; np != NULL; np = next) {
+		next = np->next;
+
 		if (np->sno == rsno) {
 			run_scenario(np, NULL);
+			free_scenario(np);
 			pass = total_pass;
 			fail = total_fail;
+			scenario = NULL;
 		} else if (rsno == 0) {
 			struct workfunc wf = { 0 };
 
 			wf.scenario = np;
+			wf.head = scenario;
 			while (crbehave_queue_worker(j, workfunc, &wf) == 0)
 				crbehave_reap_workers(&pass, &fail);
 		}
@@ -496,15 +521,13 @@ crbehave_run(
 		while (crbehave_reap_workers(&pass, &fail) > 0)
 			;
 
-	if (reset != NULL)
-		reset();
-
 	for (np = scenario; np != NULL; np = next) {
 		next = np->next;
 		free_scenario(np);
 	}
 
-	fclose(fp);
+	if (reset != NULL)
+		reset();
 
 	printf("%s: %d (pass) %d (fail)\n", arg0, pass, fail);
 
