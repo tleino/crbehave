@@ -88,6 +88,9 @@ crbehave_reap_workers(int *pass, int *fail)
 	int status;
 	unsigned char c;
 
+	if (nworkers == 0)
+		return nworkers;
+
 	nready = poll(pollfds, nworkers, -1);
 	if (nready == -1)
 		err(1, "poll");
