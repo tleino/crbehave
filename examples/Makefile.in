@@ -1,3 +1,5 @@
+.SUFFIXES: .feature .report
+
 CFLAGS = -Wall -g -std=c99
 LDFLAGS =
 TESTS_CFLAGS = @TESTS_CFLAGS@ $(LDFLAGS)
@@ -21,11 +23,22 @@ tests/matrix: tests/matrix.c
 tests/bank: tests/bank.c
 	$(CC) $(TESTS_CFLAGS) tests/bank.c -o$@ $(TESTS_LDFLAGS)
 
-check: $(TESTS)
-	@cd tests && ./tuples
-	@cd tests && ./canvas
-	@cd tests && ./matrix
-	@cd tests && ./bank
+.feature.report: $(@:.report=)
+	$(@:.report=) < $< | sort | tee $@
+
+tests/tuples.report: tests/tuples tests/tuples.feature
+	tests/tuples <tests/tuples.feature | sort | tee tuples.report
+
+tests/canvas.report: tests/canvas tests/canvas.feature
+	tests/canvas <tests/canvas.feature | sort | tee canvas.report
+
+tests/matrix.report: tests/matrix tests/matrix.feature
+	tests/matrix <tests/matrix.feature | sort | tee matrix.report
+
+tests/bank.report: tests/bank tests/bank.feature
+	tests/bank <tests/bank.feature | sort | tee bank.report
+
+check: tests/tuples.report tests/canvas.report tests/matrix.report tests/bank.report
 
 clean:
 	rm -f $(PROG) $(OBJS) $(TESTS)

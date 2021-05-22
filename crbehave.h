@@ -58,7 +58,7 @@ int parse_table_row(char *, char **, size_t);
 typedef int (*KeywordCallback)(struct match *, const char *, const char *);
 typedef void (*ResetCallback)(void);
 int
-crbehave_run(int argc, char **argv, char *file,
+crbehave_run(int argc, char **argv,
     KeywordCallback given, KeywordCallback when, KeywordCallback then,
     ResetCallback reset);
 
