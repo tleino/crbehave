@@ -409,7 +409,6 @@ crbehave_run(
 	static FILE *fp;
 	char *line = NULL;
 	size_t i, n, len;
-	int j;
 	struct crbehave_scenario *scenario = NULL, *np, *next, *cs;
 	static const struct {
 		const char *str;
@@ -510,7 +509,8 @@ crbehave_run(
 
 			wf.scenario = np;
 			wf.head = scenario;
-			while (crbehave_queue_worker(j, workfunc, &wf) == 0)
+			while (crbehave_queue_worker(
+			    np->sno, workfunc, &wf) == 0)
 				crbehave_reap_workers(&pass, &fail);
 		}
 	}

@@ -122,9 +122,11 @@ crbehave_reap_workers(int *pass, int *fail)
 
 		waitpid(workers[i].pid, &status, 0);
 		if (WIFSIGNALED(status))
-			warnx("scenario %d terminated by "
-			    "signal %d", workers[i].sno,
-			    WTERMSIG(status));
+			printf("%3d\tfail\tterminated by signal %d\n",
+			    workers[i].sno, WTERMSIG(status));
+		else if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+			printf("%3d\tfail\texited with abnormal status %d\n",
+			    workers[i].sno, WEXITSTATUS(status));
 		nworkers--;
 		memmove(&pollfds[i], &pollfds[i + 1],
 		    sizeof(struct pollfd) * (nworkers - i));
