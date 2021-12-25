@@ -1,12 +1,11 @@
-crbehave
-========
+# crbehave
 
-crbehave is a behavior driven development framework for C that uses
+*crbehave* is a behavior driven development framework for C that uses
 standard regular expressions for matching, instead of a specialized
 system, and instead of relying on macros.
 
-The crbehave reads a specification of scenarios following the Gherkin
-given-when-then syntax and calls the respective functions for making the
+The *crbehave* reads a specification of scenarios following the Gherkin
+*given-when-then* syntax and calls the respective functions for making the
 specification executable.
 
 The scenarios are tested in separate worker processes for making sure
@@ -20,39 +19,37 @@ Test-Driven Guide to Your First 3D Renderer", after finding, at that
 time, there was no adequate behavior driven development framework for C
 that would satisfy the author's taste.
 
-Dependencies
-============
+## Dependencies
 
 None as long as you're on a conventional Unix-like OS base system with
 C compiler and standard headers installed.
 
-Build and run tests
-===================
+## Build and run tests
 
-./configure ~
-make install
+Build and install:
 
-cd examples
-./configure --enable-tests ~
-make check
+	./configure ~
+	make install
 
-Run example tests from command line
-===================================
+Build and run tests:
 
-cd examples/tests
-for a in tuples matrix bank canvas ; do
-  ./${a} <${a}.feature | sort -n | tee ${a}.report
-done
+	cd examples
+	./configure --enable-tests ~
+	make check
 
-Command line options
-====================
+Run example tests from command line:
+
+	cd examples/tests
+	for a in tuples matrix bank canvas ; do
+		./${a} <${a}.feature | sort -n | tee ${a}.report
+	done
+
+## Command line options
 
 The test programs accept the following command line options:
 
- -v
-	Verbose output
- -j<n>
-	Specify the maximum number of worker processes
+* **-v** Verbose output
+* **-j<n>** Specify the maximum number of worker processes
 
-The test specification is read from stdin and the report is pushed
-to stdout.
+The test specification is read from *stdin* and the report is pushed
+to *stdout*.
